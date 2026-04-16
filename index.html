@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#F5F7FA">
+  <meta name="description" content="Daylist - Smart Daily To-Do List PWA">
+  <title>Daylist — My Tasks</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/phosphor-icons@1.4.2/src/css/phosphor.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ===== TASKS VIEW ===== -->
+  <section id="view-tasks" class="view active">
+    <header class="main-header">
+      <div class="header-top">
+        <div>
+          <h1 class="header-title">My Tasks</h1>
+          <p class="header-date" id="header-date"></p>
+        </div>
+        <button class="icon-btn" id="btn-search" aria-label="Search">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><line x1="15" y1="15" x2="20" y2="20"/></svg>
+        </button>
+      </div>
+
+      <!-- Search Bar (hidden by default) -->
+      <div class="search-bar" id="search-bar">
+        <svg width="18" height="18" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><line x1="13" y1="13" x2="17" y2="17"/></svg>
+        <input type="text" id="search-input" placeholder="Cari task..." autocomplete="off">
+        <button class="search-close" id="search-close">&times;</button>
+      </div>
+
+      <!-- Horizontal Calendar Strip -->
+      <div class="calendar-strip-wrapper">
+        <button class="cal-arrow cal-arrow-left" id="cal-left" aria-label="Previous">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="12,4 6,9 12,14"/></svg>
+        </button>
+        <div class="calendar-strip" id="calendar-strip"></div>
+        <button class="cal-arrow cal-arrow-right" id="cal-right" aria-label="Next">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,4 12,9 6,14"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="task-list-container">
+      <div id="task-list" class="task-list"></div>
+
+      <!-- Empty State -->
+      <div id="empty-state" class="empty-state hidden">
+        <img src="empty-state.png" alt="No tasks" class="empty-img">
+        <p class="empty-text">Belum ada task</p>
+        <p class="empty-sub">Ketuk tombol + untuk menambahkan task baru</p>
+      </div>
+    </main>
+
+    <!-- FAB -->
+    <button class="fab" id="fab-add" aria-label="Tambah Task">
+      <svg width="28" height="28" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="14" y1="6" x2="14" y2="22"/><line x1="6" y1="14" x2="22" y2="14"/></svg>
+    </button>
+  </section>
+
+  <!-- ===== ADD TASK VIEW ===== -->
+  <section id="view-add" class="view">
+    <header class="sub-header">
+      <button class="icon-btn" id="btn-back-add" aria-label="Kembali">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15,4 7,11 15,18"/></svg>
+      </button>
+      <h2 class="sub-title">Tambah Task</h2>
+      <div style="width:40px"></div>
+    </header>
+
+    <div class="add-form">
+      <label class="form-label" for="input-title">Judul Task</label>
+      <input type="text" id="input-title" class="form-input" placeholder='contoh: "Meeting jam 2 siang"' autocomplete="off">
+      <p class="smart-hint" id="smart-hint"></p>
+
+      <label class="form-label" for="input-time">Waktu</label>
+      <input type="time" id="input-time" class="form-input">
+
+      <label class="form-label">Prioritas</label>
+      <div class="priority-btns">
+        <button class="priority-btn selected" data-priority="penting">
+          <span class="priority-dot" style="background:#FF4757"></span> Penting
+        </button>
+        <button class="priority-btn" data-priority="sedang">
+          <span class="priority-dot" style="background:#FFA502"></span> Sedang
+        </button>
+        <button class="priority-btn" data-priority="santai">
+          <span class="priority-dot" style="background:#2ED573"></span> Santai
+        </button>
+      </div>
+
+      <div class="notif-row">
+        <div>
+          <p class="form-label" style="margin-bottom:2px">Pengingat Notifikasi</p>
+          <p class="notif-desc">Kirim notifikasi saat waktu task tiba</p>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="input-notif" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <button class="btn-save" id="btn-save">Simpan Task</button>
+    </div>
+  </section>
+
+  <!-- ===== EDIT TASK VIEW ===== -->
+  <section id="view-edit" class="view">
+    <header class="sub-header">
+      <button class="icon-btn" id="btn-back-edit" aria-label="Kembali">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15,4 7,11 15,18"/></svg>
+      </button>
+      <h2 class="sub-title">Edit Task</h2>
+      <button class="icon-btn delete-btn" id="btn-delete-task" aria-label="Hapus">
+        <svg width="20" height="20" fill="none" stroke="#FF4757" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,6 5,6 19,6"/><path d="M7 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="10" x2="10" y2="16"/><line x1="14" y1="10" x2="14" y2="16"/><path d="M5 6l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12"/></svg>
+      </button>
+    </header>
+    <div class="add-form">
+      <label class="form-label" for="edit-title">Judul Task</label>
+      <input type="text" id="edit-title" class="form-input" autocomplete="off">
+
+      <label class="form-label" for="edit-time">Waktu</label>
+      <input type="time" id="edit-time" class="form-input">
+
+      <label class="form-label">Prioritas</label>
+      <div class="priority-btns" id="edit-priority-btns">
+        <button class="priority-btn" data-priority="penting">
+          <span class="priority-dot" style="background:#FF4757"></span> Penting
+        </button>
+        <button class="priority-btn" data-priority="sedang">
+          <span class="priority-dot" style="background:#FFA502"></span> Sedang
+        </button>
+        <button class="priority-btn" data-priority="santai">
+          <span class="priority-dot" style="background:#2ED573"></span> Santai
+        </button>
+      </div>
+
+      <div class="notif-row">
+        <div>
+          <p class="form-label" style="margin-bottom:2px">Pengingat Notifikasi</p>
+          <p class="notif-desc">Kirim notifikasi saat waktu task tiba</p>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="edit-notif" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <button class="btn-save" id="btn-update">Update Task</button>
+    </div>
+  </section>
+
+  <!-- ===== STATS VIEW ===== -->
+  <section id="view-stats" class="view">
+    <header class="sub-header">
+      <div style="width:40px"></div>
+      <h2 class="sub-title">Statistik</h2>
+      <div style="width:40px"></div>
+    </header>
+
+    <div class="stats-content">
+      <!-- Streak Badge -->
+      <div class="streak-badge" id="streak-badge">
+        <span class="streak-fire">🔥</span>
+        <span class="streak-count" id="streak-count">0</span>
+        <span class="streak-label">Hari Streak</span>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="stats-cards">
+        <div class="stat-card stat-done">
+          <p class="stat-num" id="stat-done">0</p>
+          <p class="stat-label">Selesai</p>
+        </div>
+        <div class="stat-card stat-pending">
+          <p class="stat-num" id="stat-pending">0</p>
+          <p class="stat-label">Belum</p>
+        </div>
+        <div class="stat-card stat-productivity">
+          <p class="stat-num" id="stat-productivity">0%</p>
+          <p class="stat-label">Produktivitas</p>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-container">
+        <h3 class="chart-title">Tren Mingguan</h3>
+        <canvas id="weekly-chart"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SETTINGS VIEW ===== -->
+  <section id="view-settings" class="view">
+    <header class="sub-header">
+      <div style="width:40px"></div>
+      <h2 class="sub-title">Pengaturan</h2>
+      <div style="width:40px"></div>
+    </header>
+
+    <div class="settings-content">
+      <div class="setting-item">
+        <div>
+          <p class="setting-title">Notifikasi</p>
+          <p class="setting-desc">Aktifkan pengingat task</p>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="setting-notif" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-item">
+        <div>
+          <p class="setting-title">Hapus Semua Data</p>
+          <p class="setting-desc">Reset seluruh task dan statistik</p>
+        </div>
+        <button class="btn-danger" id="btn-clear-all">Reset</button>
+      </div>
+      <div class="setting-item about-box">
+        <p class="setting-title">Daylist v1.0</p>
+        <p class="setting-desc">Smart Daily To-Do List PWA</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== BOTTOM NAV ===== -->
+  <nav class="bottom-nav" id="bottom-nav">
+    <button class="nav-item active" data-view="view-tasks" id="nav-tasks">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      <span>Tasks</span>
+    </button>
+    <button class="nav-item" data-view="view-stats" id="nav-stats">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>Stats</span>
+    </button>
+    <button class="nav-item" data-view="view-settings" id="nav-settings">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      <span>Settings</span>
+    </button>
+  </nav>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
